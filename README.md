@@ -1,0 +1,2 @@
+# AMP-MIC
+ML與DL做AMP活性值預測
