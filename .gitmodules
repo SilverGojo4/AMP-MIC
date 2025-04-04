@@ -1,3 +1,6 @@
 [submodule "src/utils/logging_toolkit"]
 	path = src/utils/logging_toolkit
 	url = git@github.com:SilverGojo4/Logging-Toolkit.git
+[submodule "src/utils/iFeature"]
+	path = src/utils/iFeature
+	url = git@github.com:Superzchen/iFeature.git
