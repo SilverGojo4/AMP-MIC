@@ -1,0 +1,53 @@
+# ===========================
+# Ignore Python Build Files
+# ===========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ===========================
+# Ignore Python Virtual Environment
+# ===========================
+venv/
+envs/*/venv/
+*.env
+
+# ===========================
+# Ignore Logs and Temporary Files
+# ===========================
+logs/
+*.log
+*.tmp
+*.temp
+
+# ===========================
+# Ignore Data Files
+# ===========================
+data/raw/
+data/interim/
+data/processed/
+
+# ===========================
+# Ignore Experiment Outputs
+# ===========================
+outputs/
+
+# ===========================
+# Ignore Jupyter Notebook Checkpoints
+# ===========================
+notebooks/.ipynb_checkpoints/
+
+# ===========================
+# Ignore Test Outputs
+# ===========================
+tests/**/__pycache__/
+tests/**/.pytest_cache/
+tests/**/results/
+
+# ===========================
+# Ignore IDE & OS Specific Files
+# ===========================
+.DS_Store
+.vscode/
