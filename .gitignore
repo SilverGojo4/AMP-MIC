@@ -32,6 +32,7 @@ data/processed/
 # ===========================
 # Ignore Experiment Outputs
 # ===========================
+experiments/
 outputs/
 
 # ===========================
