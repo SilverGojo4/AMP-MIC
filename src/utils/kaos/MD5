@@ -1,0 +1,16 @@
+911f9e0bc85974dc6c27ba4ee3bf7c55 *DESCRIPTION
+e25f634d9f82faf7dfd3b60ce5a6f05b *NAMESPACE
+8ab46ecd737fd83d74583ad3d64c5038 *R/HIV.R
+19cdaf1a6ca7da83f36783802e0b2580 *R/Message.R
+7da5d595042b5d9b51c8dce2e2aa2e8a *R/cgr.R
+9518262f9d2784a4a1ce06897c707c4b *R/cgr.plot.R
+2e26e29d733631af51a99af6f8f969f7 *R/cgr.res.R
+70c721ddb446d340e98280c345bd0469 *R/distr.pts.R
+fb7d94db843f24c21b3ac9853e188abb *R/vectorize.R
+283a3de0efc4f974bb10d2ee7c563843 *data/HIV.rda
+1783c900bf02e5c1071340af99ba20bf *inst/CITATION
+82ee44b05a81833f60e4752a6a48bda9 *man/HIV.Rd
+7c61d984dc490fb6abf560b3b986c2f2 *man/cgr.Rd
+2ecda6e1b838b775da256e666902e75e *man/cgr.plot.Rd
+8777388e1f4ce05296dd399edf2cf8be *man/cgr.res.Rd
+98ca36cdef74f324969abfd4f4fecc2e *man/vectorize.Rd

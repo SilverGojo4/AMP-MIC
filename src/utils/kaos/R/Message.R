@@ -1,0 +1,1 @@
+packageStartupMessage("Please cite: Loechel HF, Eger D, Sperlea T, Heider D: Deep Learning on Chaos Game Representation for Proteins. Bioinformatics 2019, in press. <doi:10.1093/bioinformatics/btz493>.")
