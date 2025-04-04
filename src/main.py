@@ -47,6 +47,14 @@ SUPPORTED_STAGES = {
         "title": "Data Cleaning",
         "import_path": "src.data.clean.run_clean_pipeline",
     },
+    "ifeature": {
+        "title": "Feature Extraction (iFeature)",
+        "import_path": "src.feature.ifeature_encoding.run_ifeature_pipeline",
+    },
+    "cgr": {
+        "title": "Feature Extraction (Chaos game representation)",
+        "import_path": "src.feature.cgr_encoding.run_cgr_pipeline",
+    },
 }
 
 
@@ -108,6 +116,8 @@ def main():
             "Pipeline stages:\n"
             "  collect       Run data collection from external AMP databases\n"
             "  clean         Clean and aggregate data for downstream modeling\n"
+            "  ifeature      Extract iFeature-based descriptors (AAC, PAAC, CTDD, GAAC)\n"
+            "  cgr           Generate CGR features at multiple resolutions (8x8, 16x16, ...)\n"
             "\n"
             "Stage combinations:\n"
             "  --preprocess  Shortcut for: collect → clean\n"
@@ -116,6 +126,8 @@ def main():
             "Examples:\n"
             "  python main.py --stage collect\n"
             "  python main.py --stage clean\n"
+            "  python main.py --stage ifeature\n"
+            "  python main.py --stage cgr\n"
             "  python main.py --preprocess\n"
             "  python main.py --all"
         ),
