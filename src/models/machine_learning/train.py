@@ -284,7 +284,7 @@ def run_train_ml_pipeline(
 
         # Path to hyperparameter configuration
         hyperparams_config_path = os.path.join(
-            base_path, "configs/ML/hyperparameters.json"
+            base_path, "configs/machine_learning/hyperparameters.json"
         )
 
         # Define a list of feature sets to process for each strain in the training pipeline.
