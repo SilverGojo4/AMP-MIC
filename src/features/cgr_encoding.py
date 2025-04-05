@@ -274,8 +274,8 @@ def run_cgr_pipeline(base_path: str, logger: CustomLogger) -> None:
         # Types of data splits to process (training and testing)
         data_type = ["train", "test"]
 
-        # Resolutions to use for CGR encoding (e.g., 8x8 to 64x64)
-        resolutions = [8, 16, 32, 64]
+        # Resolutions to use for CGR encoding (e.g., 8x8 to 32x32)
+        resolutions = [8, 16, 32]
 
         # Loop over each strain type
         for strain_index, (strain, suffix) in enumerate(strains.items(), start=1):
