@@ -100,15 +100,15 @@ def evaluate_predictions(
         )
 
     except FileNotFoundError:
-        logger.exception(msg=f"FileNotFoundError in 'evaluate_predictions()'.")
+        logger.exception(msg="FileNotFoundError in 'evaluate_predictions()'.")
         raise
 
     except KeyError:
-        logger.exception(msg=f"KeyError in 'evaluate_predictions()'.")
+        logger.exception(msg="KeyError in 'evaluate_predictions()'.")
         raise
 
     except Exception:
-        logger.exception(msg=f"Unexpected error in 'evaluate_predictions()'.")
+        logger.exception(msg="Unexpected error in 'evaluate_predictions()'.")
         raise
 
 
@@ -336,11 +336,11 @@ def run_test_ml_pipeline(
                 for _, model in enumerate(models_to_train, start=1):
                     model_input_path = os.path.join(
                         base_path,
-                        f"experiments/models/{suffix}/ML/{model}{feature['suffix']}.pkl",
+                        f"experiments/models/{suffix}/machine_learning/{model}{feature['suffix']}.pkl",
                     )
                     prediction_output_path = os.path.join(
                         base_path,
-                        f"experiments/predictions/{suffix}/ML/{model}{feature['suffix']}.csv",
+                        f"experiments/predictions/{suffix}/machine_learning/{model}{feature['suffix']}.csv",
                     )
                     test_model(
                         df_metadata=df_metadata,

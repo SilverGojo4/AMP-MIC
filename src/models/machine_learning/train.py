@@ -129,9 +129,9 @@ def train_model(
             total_iterations = total_combinations * cv
             logger.log_with_borders(
                 level=logging.INFO,
-                message=f"Performing 'GridSearchCV' for '{model_type}':\n"
-                f"  • Total number of parameters: {num_parameters}\n"
-                f"  • Number of parameter combinations: {total_combinations}\n"
+                message=f"Performing 'GridSearchCV' for '{model_type}' model:\n"
+                f"  • Total number of hyperparameters: {num_parameters}\n"
+                f"  • Number of hyperparameter combinations: {total_combinations}\n"
                 f"  • Cross-validation folds: {cv}\n"
                 f"  • Total training iterations: {total_iterations}",
                 border="|",
@@ -152,17 +152,18 @@ def train_model(
             cv_results = grid_search.cv_results_
             best_idx = grid_search.best_index_
             best_params = cv_results["params"][best_idx]
+            param_str = "\n".join([f"    ▸ '{k}': {v}" for k, v in best_params.items()])
             mean_score = -cv_results["mean_test_score"][best_idx]
             std_score = cv_results["std_test_score"][best_idx]
             model = grid_search.best_estimator_
 
-            # Log best hyperparameters
+            # Log best model
             logger.log_with_borders(
                 level=logging.INFO,
-                message=f"Best hyperparameters for '{model_type}':\n"
-                f"  • Parameters:\n     {best_params}\n"
+                message=f"Best results for '{model_type}' model:\n"
                 f"  • Mean {loss_name}: {mean_score:.4f}\n"
-                f"  • Std {loss_name}: {std_score:.4f}",
+                f"  • Std {loss_name}: {std_score:.4f}\n"
+                f"  • Hyperparameters:\n{param_str}",
                 border="|",
                 length=100,
             )
@@ -343,7 +344,7 @@ def run_train_ml_pipeline(
                 for _, model in enumerate(models_to_train, start=1):
                     model_output_path = os.path.join(
                         base_path,
-                        f"experiments/models/{suffix}/ML/{model}{feature['suffix']}.pkl",
+                        f"experiments/models/{suffix}/machine_learning/{model}{feature['suffix']}.pkl",
                     )
                     train_model(
                         X_train=X_train,
