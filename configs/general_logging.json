@@ -46,6 +46,16 @@
       "handlers": ["console", "general"],
       "level": "DEBUG",
       "propagate": false
+    },
+    "train_ml_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "test_ml_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
     }
   }
 }

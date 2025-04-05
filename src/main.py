@@ -4,17 +4,6 @@ ANIA - Project Main Entry Point
 
 This script serves as the centralized command-line interface for executing the ANIA pipeline,
 which enables the preprocessing and analysis of antimicrobial peptide (AMP) data.
-
-Supported pipeline stages include:
-----------------------------------
-- Data Preprocessing (collecting, cleaning)
-
-Users can run specific stages by specifying pipeline targets.
------
-Users can run specific stages via:
-    python main.py --stage collect
-    python main.py --stage preprocess
-    python main.py --all
 """
 # ============================== Standard Library Imports ==============================
 import argparse
@@ -49,17 +38,25 @@ SUPPORTED_STAGES = {
     },
     "ifeature": {
         "title": "Feature Extraction (iFeature)",
-        "import_path": "src.feature.ifeature_encoding.run_ifeature_pipeline",
+        "import_path": "src.features.ifeature_encoding.run_ifeature_pipeline",
     },
     "cgr": {
         "title": "Feature Extraction (Chaos game representation)",
-        "import_path": "src.feature.cgr_encoding.run_cgr_pipeline",
+        "import_path": "src.features.cgr_encoding.run_cgr_pipeline",
+    },
+    "train_ml": {
+        "title": "Train Machine Learning Model",
+        "import_path": "src.models.machine_learning.train.run_train_ml_pipeline",
+    },
+    "test_ml": {
+        "title": "Test Machine Learning Model",
+        "import_path": "src.models.machine_learning.test.run_test_ml_pipeline",
     },
 }
 
 
 # ============================== Pipeline Dispatcher ==============================
-def dispatch_stage(stage: str) -> None:
+def dispatch_stage(stage: str, args) -> None:
     """
     Dispatch execution to the appropriate pipeline stage using lazy import.
 
@@ -67,6 +64,8 @@ def dispatch_stage(stage: str) -> None:
     ----------
     stage : str
         The pipeline stage to execute.
+    args : argparse.Namespace
+        Command-line arguments containing stage-specific options.
     """
     # Setup dedicated log file for this stage
     log_config_file = os.path.join(BASE_PATH, "configs/general_logging.json")
@@ -99,7 +98,34 @@ def dispatch_stage(stage: str) -> None:
         length=40,
         border="=",
     )
-    stage_func(base_path=BASE_PATH, logger=logger)
+    if stage == "train_ml":
+        if not args.model_type:
+            logger.error("Missing '--model_type' for 'train_ml' stage.")
+            raise ValueError(
+                "Please specify '--model_type' (e.g., 'linear', 'random_forest', 'svm', 'xgboost', or 'all') for 'train_ml' stage."
+            )
+        stage_func(
+            base_path=BASE_PATH,
+            model_type=args.model_type,
+            n_jobs=args.n_jobs,
+            random_state=args.random_state,
+            cv=args.cv,
+            loss_function=args.loss_function,
+            logger=logger,
+        )
+    elif stage == "test_ml":
+        if not args.model_type:
+            logger.error("Missing '--model_type' for 'test_ml' stage.")
+            raise ValueError(
+                "Please specify '--model_type' (e.g., 'linear', 'random_forest', 'svm', 'xgboost', or 'all') for 'test_ml' stage."
+            )
+        stage_func(
+            base_path=BASE_PATH,
+            logger=logger,
+            model_type=args.model_type,
+        )
+    else:
+        stage_func(base_path=BASE_PATH, logger=logger)
 
 
 # ============================== Main Entry ==============================
@@ -118,17 +144,22 @@ def main():
             "  clean         Clean and aggregate data for downstream modeling\n"
             "  ifeature      Extract iFeature-based descriptors (AAC, PAAC, CTDD, GAAC)\n"
             "  cgr           Generate CGR features at multiple resolutions (8x8, 16x16, ...)\n"
+            "  train_ml      Train machine learning models on iFeature and CGR features (specify --model_type)\n"
+            "  test_ml       Test trained machine learning models on test data (specify --model_type)\n"
             "\n"
             "Stage combinations:\n"
             "  --preprocess  Shortcut for: collect → clean\n"
+            "  --encoding    Shortcut for: ifeature → cgr\n"
+            "  --machine_learning  Shortcut for: train_ml → test_ml\n"
             "  --all         Run all supported pipeline stages sequentially\n"
             "\n"
             "Examples:\n"
             "  python main.py --stage collect\n"
-            "  python main.py --stage clean\n"
-            "  python main.py --stage ifeature\n"
-            "  python main.py --stage cgr\n"
+            "  python main.py --stage train_ml --model_type linear random_forest --n_jobs -1 --random_state 42 --cv 5\n"
+            "  python main.py --stage test_ml --model_type linear random_forest\n"
             "  python main.py --preprocess\n"
+            "  python main.py --encoding\n"
+            "  python main.py --machine_learning --model_type linear random_forest\n"
             "  python main.py --all"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
@@ -150,9 +181,60 @@ def main():
     )
 
     parser.add_argument(
-        "--preprocess",
-        action="store_true",
-        help="",
+        "--preprocess", action="store_true", help="Run collect → clean."
+    )
+
+    parser.add_argument("--encoding", action="store_true", help="Run ifeature → cgr.")
+
+    parser.add_argument(
+        "--machine_learning", action="store_true", help="Run train_ml → test_ml."
+    )
+
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        nargs="+",
+        choices=[
+            "linear",
+            "lasso",
+            "ridge",
+            "elastic_net",
+            "random_forest",
+            "svm",
+            "xgboost",
+            "gradient_boosting",
+            "all",
+        ],
+        help="Model type(s) for train_ml stage (e.g., 'linear random_forest' or 'all' for all models).",
+    )
+
+    parser.add_argument(
+        "--n_jobs",
+        type=int,
+        default=-1,
+        help="Number of CPU cores for training (-1 for all available cores).",
+    )
+
+    parser.add_argument(
+        "--random_state",
+        type=int,
+        default=42,
+        help="Random seed for reproducibility in training (default is 42).",
+    )
+
+    parser.add_argument(
+        "--cv",
+        type=int,
+        default=5,
+        help="Number of cross-validation folds for GridSearchCV in training (default is 5).",
+    )
+
+    parser.add_argument(
+        "--loss_function",
+        type=str,
+        default="neg_mean_squared_error",
+        choices=["neg_mean_squared_error", "neg_mean_absolute_error"],
+        help="Loss function for GridSearchCV scoring ('neg_mean_squared_error', 'neg_mean_absolute_error'). Default is 'neg_mean_squared_error'.",
     )
 
     args = parser.parse_args()
@@ -166,6 +248,10 @@ def main():
             stages_to_run = list(SUPPORTED_STAGES.keys())
         elif args.preprocess:
             stages_to_run = ["collect", "clean"]
+        elif args.encoding:
+            stages_to_run = ["ifeature", "cgr"]
+        elif args.machine_learning:
+            stages_to_run = ["train_ml", "test_ml"]
         elif args.stage:
             stages_to_run = args.stage
         else:
@@ -173,7 +259,7 @@ def main():
 
         # Dispatch each selected stage
         for stage in stages_to_run:
-            dispatch_stage(stage=stage.lower())
+            dispatch_stage(stage.lower(), args)
 
         # Final success message
         print("Pipeline execution completed successfully.")
