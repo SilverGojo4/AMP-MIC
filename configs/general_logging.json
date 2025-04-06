@@ -61,6 +61,51 @@
       "handlers": ["console", "general"],
       "level": "DEBUG",
       "propagate": false
+    },
+    "train_dl_word_embedding_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "train_dl_fcgr_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "train_dl_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "test_dl_word_embedding_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "test_dl_fcgr_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "test_dl_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "fine_tune_word_embedding_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "fine_tune_fcgr_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "fine_tune_ania_logger": {
+      "handlers": ["console", "general"],
+      "level": "DEBUG",
+      "propagate": false
     }
   }
 }

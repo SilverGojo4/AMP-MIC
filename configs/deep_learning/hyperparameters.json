@@ -1,0 +1,42 @@
+{
+  "fcgr_ania": {
+    "inception_out_channels": [64, 128, 256],
+    "d_model": [256, 512],
+    "num_heads": [4, 8],
+    "dense_hidden_dim": [128, 256, 512],
+    "dropout_rate": [0.1, 0.2, 0.3],
+    "learning_rate": [1e-3, 5e-4, 1e-4],
+    "batch_size": [128, 256, 512],
+    "optimizer": ["adam", "adamw"],
+    "loss_function": ["mse"],
+    "epochs": [50, 100],
+    "weight_decay": [0, 1e-5, 1e-4]
+  },
+  "word_embedding_ania": {
+    "inception_out_channels": [128, 256, 512],
+    "d_model": [512, 1024],
+    "num_heads": [8, 16],
+    "dense_hidden_dim": [256, 512, 1024],
+    "dropout_rate": [0.2, 0.3, 0.4],
+    "learning_rate": [5e-4, 1e-4, 5e-5],
+    "batch_size": [64, 128, 256],
+    "optimizer": ["adam", "adamw"],
+    "loss_function": ["mse"],
+    "epochs": [100, 150],
+    "weight_decay": [1e-5, 1e-4]
+  },
+  "ania": {
+    "fcgr_inception_out_channels": [64, 128, 256],
+    "word_inception_out_channels": [128, 256, 512],
+    "d_model": [512, 1024],
+    "num_heads": [8, 16],
+    "dense_hidden_dim": [256, 512, 1024],
+    "dropout_rate": [0.2, 0.3, 0.4],
+    "learning_rate": [1e-4, 5e-5, 1e-5],
+    "batch_size": [64, 128],
+    "optimizer": ["adam", "adamw"],
+    "loss_function": ["mse"],
+    "epochs": [100, 150, 200],
+    "weight_decay": [1e-5, 1e-4]
+  }
+}

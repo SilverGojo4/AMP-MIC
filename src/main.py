@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long, import-error, wrong-import-position, broad-exception-caught
+# pylint: disable=line-too-long, import-error, wrong-import-position, broad-exception-caught, too-many-branches
 """
 ANIA - Project Main Entry Point
 
@@ -86,6 +86,32 @@ SUPPORTED_STAGES = {
 }
 
 
+def build_dl_logger(stage: str, model_type: str):
+    """
+    Create a unique logger instance for deep learning stages using model type and device.
+
+    Parameters
+    ----------
+    stage : str
+        Stage name (e.g., 'train_dl', 'test_dl').
+    model_type : str
+        DL model type (e.g., 'fcgr_ania', 'word_embedding_ania').
+
+    Returns
+    -------
+    logger : CustomLogger
+        Configured logger instance.
+    """
+    suffix = f"{stage}_{model_type}"
+    log_path = os.path.join(BASE_PATH, "logs", f"{suffix}.log")
+    return setup_logging(
+        input_config_file=os.path.join(BASE_PATH, "configs/general_logging.json"),
+        output_log_path=log_path,
+        logger_name=f"{suffix}_logger",
+        handler_name="general",
+    )
+
+
 # ============================== Pipeline Dispatcher ==============================
 def dispatch_stage(stage: str, args) -> None:
     """
@@ -102,23 +128,10 @@ def dispatch_stage(stage: str, args) -> None:
     args : argparse.Namespace
         Parsed command-line arguments containing stage-specific options.
     """
-    # Setup dedicated log file for this stage
-    log_config_file = os.path.join(BASE_PATH, "configs/general_logging.json")
-    stage_log_path = os.path.join(BASE_PATH, f"logs/{stage}_stage.log")
-    output_dir = os.path.dirname(stage_log_path)
-    os.makedirs(output_dir, exist_ok=True)
-    logger = setup_logging(
-        input_config_file=log_config_file,
-        output_log_path=stage_log_path,
-        logger_name=f"{stage}_logger",
-        handler_name="general",
-    )
-
     # Validate stage
     if stage not in SUPPORTED_STAGES:
         available = ", ".join(SUPPORTED_STAGES.keys())
-        logger.error(f"Invalid stage '{stage}'. Available stages: {available}.")
-        raise ValueError(f"Unknown stage '{stage}'.")
+        raise ValueError(f"Unknown stage '{stage}'. Available stages: {available}.")
 
     # Lazy load stage function
     stage_info = SUPPORTED_STAGES[stage]
@@ -126,19 +139,79 @@ def dispatch_stage(stage: str, args) -> None:
     module = importlib.import_module(module_path)
     stage_func = getattr(module, func_name)
 
-    # Log and run
-    logger.log_title(
-        f"Running Stage: '{stage_info['title']}'",
-        level=logging.INFO,
-        length=40,
-        border="=",
+    # =================== DL stages with GPU-based logger isolation ===================
+    if stage in {"train_dl", "test_dl", "fine_tune"}:
+        model_type = (
+            args.model_type[0] if isinstance(args.model_type, list) else args.model_type
+        )
+        logger = build_dl_logger(stage, model_type)
+        logger.log_title(f"Running Stage: '{stage_info['title']}'", level=logging.INFO)
+        if stage == "train_dl":
+            if not args.model_type:
+                logger.error("Missing '--model_type' for 'train_dl' stage.")
+                raise ValueError(
+                    "Please specify '--model_type' (e.g., 'fcgr_ania', 'word_embedding_ania') for 'train_dl' stage."
+                )
+            if len(args.model_type) > 1:
+                logger.error("Only one '--model_type' is allowed for 'train_dl' stage.")
+                raise ValueError(
+                    "Please specify a single '--model_type' for 'train_dl' stage."
+                )
+            stage_func(
+                base_path=BASE_PATH,
+                model_type=model_type,
+                train_split=args.train_split,
+                patience=args.patience,
+                random_search=args.random_search,
+                num_random_samples=args.num_random_samples,
+                device=args.device,
+                logger=logger,
+            )
+        elif stage == "test_dl":
+            if not args.model_type:
+                logger.error("Missing '--model_type' for 'test_dl' stage.")
+                raise ValueError(
+                    "Please specify '--model_type' (e.g., 'fcgr_ania', 'word_embedding_ania') for 'test_dl' stage."
+                )
+            stage_func(
+                base_path=BASE_PATH,
+                model_type=model_type,
+                device=args.device,
+                logger=logger,
+            )
+        elif stage == "fine_tune":
+            if not args.model_type:
+                logger.error("Missing '--model_type' for 'fine_tune' stage.")
+                raise ValueError(
+                    "Please specify '--model_type' (e.g., 'fcgr_ania', 'word_embedding_ania') for 'fine_tune' stage."
+                )
+            stage_func(
+                base_path=BASE_PATH,
+                model_type=model_type,
+                device=args.device,
+                ft_epochs=args.ft_epochs,
+                freeze_inception=args.freeze_inception,
+                logger=logger,
+            )
+        return
+
+    # =================== Non-DL stages use default stage-based logger ===================
+    log_config_file = os.path.join(BASE_PATH, "configs/general_logging.json")
+    stage_log_path = os.path.join(BASE_PATH, f"logs/{stage}_stage.log")
+    os.makedirs(os.path.dirname(stage_log_path), exist_ok=True)
+    logger = setup_logging(
+        input_config_file=log_config_file,
+        output_log_path=stage_log_path,
+        logger_name=f"{stage}_logger",
+        handler_name="general",
     )
+    logger.log_title(f"Running Stage: '{stage_info['title']}'", level=logging.INFO)
+
+    # Dispatch ML & other stages
     if stage == "train_ml":
         if not args.model_type:
             logger.error("Missing '--model_type' for 'train_ml' stage.")
-            raise ValueError(
-                "Please specify '--model_type' (e.g., 'linear', 'random_forest', 'svm', 'xgboost', or 'all') for 'train_ml' stage."
-            )
+            raise ValueError("Please specify '--model_type' for 'train_ml' stage.")
         stage_func(
             base_path=BASE_PATH,
             model_type=args.model_type,
@@ -151,61 +224,14 @@ def dispatch_stage(stage: str, args) -> None:
     elif stage == "test_ml":
         if not args.model_type:
             logger.error("Missing '--model_type' for 'test_ml' stage.")
-            raise ValueError(
-                "Please specify '--model_type' (e.g., 'linear', 'random_forest', 'svm', 'xgboost', or 'all') for 'test_ml' stage."
-            )
+            raise ValueError("Please specify '--model_type' for 'test_ml' stage.")
         stage_func(
             base_path=BASE_PATH,
             logger=logger,
             model_type=args.model_type,
-        )
-    elif stage == "train_dl":
-        if not args.model_type:
-            logger.error("Missing '--model_type' for 'train_dl' stage.")
-            raise ValueError(
-                "Please specify '--model_type' (e.g., 'fcgr_ania') for 'train_dl' stage."
-            )
-        stage_func(
-            base_path=BASE_PATH,
-            model_type=args.model_type,
-            train_split=args.train_split,
-            patience=args.patience,
-            random_search=args.random_search,
-            num_random_samples=args.num_random_samples,
-            device=args.device,
-            logger=logger,
-        )
-    elif stage == "test_dl":
-        if not args.model_type:
-            logger.error("Missing '--model_type' for 'test_dl' stage.")
-            raise ValueError(
-                "Please specify '--model_type' (e.g., 'fcgr_ania') for 'test_dl' stage."
-            )
-        stage_func(
-            base_path=BASE_PATH,
-            model_type=args.model_type,
-            device=args.device,
-            logger=logger,
-        )
-    elif stage == "fine_tune":
-        if not args.model_type:
-            logger.error("Missing '--model_type' for 'fine_tune' stage.")
-            raise ValueError(
-                "Please specify '--model_type' (e.g., 'fcgr_ania') for 'fine_tune' stage."
-            )
-        stage_func(
-            base_path=BASE_PATH,
-            model_type=(
-                args.model_type[0]
-                if isinstance(args.model_type, list)
-                else args.model_type
-            ),
-            device=args.device,
-            ft_epochs=args.ft_epochs,
-            freeze_inception=args.freeze_inception,
-            logger=logger,
         )
     else:
+        # General stage with only (base_path, logger)
         stage_func(base_path=BASE_PATH, logger=logger)
 
 
@@ -228,7 +254,9 @@ def main():
             "  train_ml        Train classical ML models on iFeature/CGR features (requires --model_type)\n"
             "  test_ml         Test classical ML models on evaluation data (requires --model_type)\n"
             "  word_embedding  Encode sequences using precomputed amino acid letter embeddings\n"
-            "  train_dl        Train deep learning models using CGR features (e.g., FCGRANIA)\n"
+            "  train_dl        Train deep learning models (e.g., FCGRANIA, WordEmbeddingANIA) (requires --model_type)\n"
+            "  test_dl         Test deep learning models (requires --model_type)\n"
+            "  fine_tune       Fine-tune deep learning models (requires --model_type)\n"
             "\n"
             "Stage combinations:\n"
             "  --preprocess        Shortcut for: collect → clean\n"
@@ -240,7 +268,7 @@ def main():
             "  python main.py --stage collect\n"
             "  python main.py --stage train_ml --model_type linear random_forest --n_jobs -1 --random_state 42 --cv 5\n"
             "  python main.py --stage test_ml --model_type linear random_forest\n"
-            "  python main.py --stage train_dl --model_type fcgr_ania --random_search --num_random_samples 30\n"
+            "  python main.py --stage train_dl --model_type word_embedding_ania --random_search --num_random_samples 30\n"
             "  python main.py --preprocess\n"
             "  python main.py --encoding\n"
             "  python main.py --machine_learning --model_type linear random_forest\n"
@@ -278,11 +306,9 @@ def main():
         "--model_type",
         type=str,
         nargs="+",
-        help=(
-            "Model type(s) to run. Depending on the stage, supported values include:\n"
-            "  • ML  → linear, lasso, ridge, elastic_net, random_forest, svm, xgboost, gradient_boosting, all\n"
-            "  • DL  → fcgr_ania\n"
-        ),
+        help="Model type(s) to run. Depending on the stage, supported values include:\n"
+        "  • ML  → linear, lasso, ridge, elastic_net, random_forest, svm, xgboost, gradient_boosting, all\n"
+        "  • DL  → fcgr_ania, word_embedding_ania\n",
     )
 
     parser.add_argument(
