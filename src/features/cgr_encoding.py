@@ -48,6 +48,47 @@ from setup_logging import CustomLogger
 
 
 # ============================== Custom Function ==============================
+def compute_cgr_features(
+    sequences: list,
+    resolution: int,
+) -> tuple[list, list]:
+    """
+    Compute CGR features for a list of sequences.
+
+    Parameters
+    ----------
+    sequences : list
+        List of sequences to encode.
+    resolution : int
+        Resolution for the CGR computation (e.g., 16 for a 16x16 matrix).
+
+    Returns
+    -------
+    tuple
+        - cgr_vectors: List of flattened CGR vectors (one per sequence).
+        - cgr_results: List of CGR result objects (for visualization or further processing).
+    """
+    # Initialize the kaos R package
+    kaos = importr("kaos")
+
+    # Process sequences for CGR encoding
+    cgr_vectors = []
+    cgr_results = []
+    for idx, seq in enumerate(sequences):
+        r_sequence = StrVector(list(seq))
+
+        # Compute CGR matrix
+        cgr_result = kaos.cgr(r_sequence, seq_base="AMINO", res=resolution)
+        cgr_matrix = np.array(ro.r("matrix")(cgr_result.rx2("matrix")))
+
+        # Flatten the CGR matrix into a 1D vector
+        flattened_vector = cgr_matrix.flatten(order="F")
+        cgr_vectors.append(flattened_vector)
+        cgr_results.append(cgr_result)
+
+    return cgr_vectors, cgr_results
+
+
 def encode_fasta_to_cgr(
     input_fasta: str,
     output_file: str,
@@ -114,18 +155,11 @@ def encode_fasta_to_cgr(
         if len(sequences) == 0:
             raise ValueError(f"Error: No valid sequences found in '{input_fasta}'.")
 
-        # Process sequences for CGR encoding
-        cgr_vectors = []
-        for _, seq in enumerate(sequences):
-            r_sequence = StrVector(list(seq))
-
-            # Compute CGR matrix
-            cgr_result = kaos.cgr(r_sequence, seq_base="AMINO", res=resolution)
-            cgr_matrix = np.array(ro.r("matrix")(cgr_result.rx2("matrix")))
-
-            # Flatten the CGR matrix into a 1D vector
-            flattened_vector = cgr_matrix.flatten(order="F")
-            cgr_vectors.append(flattened_vector)
+        # Compute CGR features
+        cgr_vectors, cgr_results = compute_cgr_features(
+            sequences=sequences,
+            resolution=resolution,
+        )
 
         # Create DataFrame for CGR features
         cgr_df = pd.DataFrame(
