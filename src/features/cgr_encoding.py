@@ -272,9 +272,9 @@ def run_cgr_pipeline(base_path: str, logger: CustomLogger) -> None:
         }
 
         # Types of data splits to process (training and testing)
-        data_type = ["train", "test"]
+        data_type = ["train", "test", "All_Integrated_aggregated"]
 
-        # Resolutions to use for CGR encoding (e.g., 8x8 to 32x32)
+        # Resolutions to use for CGR encoding (e.g., 8x8 to 16x16)
         resolutions = [8, 16, 32]
 
         # Loop over each strain type

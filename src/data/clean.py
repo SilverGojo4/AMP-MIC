@@ -259,9 +259,15 @@ def split_and_save_dataset(
             length=100,
         )
 
-        # Split the dataset into train and test sets
+        # Create bins for Log MIC Value to enable stratified sampling
+        log_mic_bins = pd.cut(df["Log MIC Value"], bins=10, labels=False)
+
+        # Split the dataset into train and test sets with stratification on Log MIC Value
         train_df, test_df = train_test_split(
-            df, test_size=test_size, random_state=42, stratify=df["Targets"]
+            df,
+            test_size=test_size,
+            random_state=42,
+            stratify=log_mic_bins,  # Stratify based on Log MIC Value bins
         )
 
         # Define file paths for saving train and test datasets
